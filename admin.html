@@ -1,0 +1,1040 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock USA Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{
+    --navy:#122446;
+    --navy-2:#1c3660;
+    --navy-soft:#3a4a6a;
+    --white:#ffffff;
+    --grey-bg:#f5f5f5;
+    --grey-line:#e1e4ea;
+    --grey-line-2:#cdd3de;
+    --red:#c6102e;
+    --red-soft:#fbe7ea;
+    --green:#1e7a46;
+    --green-soft:#e5f3ea;
+    --amber:#a06a12;
+    --amber-soft:#faf0dd;
+    --surface:#ffffff;
+    --text:#122446;
+    --text-dim:#54627f;
+    --text-faint:#8791a6;
+    --shadow: 0 1px 2px rgba(18,36,70,.06), 0 4px 14px rgba(18,36,70,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --navy:#0d1a30; --navy-2:#16274a; --navy-soft:#7c8db3;
+      --white:#0f1930; --grey-bg:#0a1122; --grey-line:#233254; --grey-line-2:#2c3d63;
+      --red:#e8536c; --red-soft:#2c1620; --green:#57c98a; --green-soft:#132a1f;
+      --amber:#e0ab52; --amber-soft:#2c2412;
+      --surface:#101d38; --text:#eaeef7; --text-dim:#a7b2cb; --text-faint:#71799a;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --navy:#0d1a30; --navy-2:#16274a; --navy-soft:#7c8db3;
+    --white:#0f1930; --grey-bg:#0a1122; --grey-line:#233254; --grey-line-2:#2c3d63;
+    --red:#e8536c; --red-soft:#2c1620; --green:#57c98a; --green-soft:#132a1f;
+    --amber:#e0ab52; --amber-soft:#2c2412;
+    --surface:#101d38; --text:#eaeef7; --text-dim:#a7b2cb; --text-faint:#71799a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--grey-bg); color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+  .display{
+    font-family:"Big Shoulders Display", "Arial Narrow", sans-serif;
+    text-transform:uppercase;
+    letter-spacing:.02em;
+    font-weight:800;
+    text-wrap:balance;
+  }
+  a{ color: inherit; }
+
+  /* ---------- login gate ---------- */
+  #loginScreen{
+    min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  .login-card{
+    background:var(--surface); border:1px solid var(--grey-line); box-shadow:var(--shadow);
+    padding:32px 28px; width:100%; max-width:340px;
+  }
+  .login-card .brand{ font-size:26px; margin-bottom:4px; }
+  .login-card .brand span{ color:var(--red); }
+  .login-card p{ font-size:12.5px; color:var(--text-dim); margin:0 0 20px; }
+  .login-card .field{ margin-bottom:12px; }
+  .login-card label{ font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text-dim); display:block; margin-bottom:5px; }
+  .login-card input{
+    width:100%; border:1px solid var(--grey-line-2); background:var(--grey-bg); color:var(--text);
+    padding:9px 10px; font:13.5px "IBM Plex Sans"; outline:none;
+  }
+  .login-card input:focus{ border-color:var(--navy-soft); }
+  .login-card button{ width:100%; margin-top:6px; }
+  .login-err{ font-size:12px; color:var(--red); margin-top:10px; display:none; }
+  .login-err.show{ display:block; }
+  #appRoot{ display:none; }
+
+  /* ---------- header ---------- */
+  header{
+    background:var(--navy);
+    color:#fff;
+    padding: 22px 28px 26px;
+  }
+  .header-row{
+    display:flex; align-items:flex-end; justify-content:space-between; gap:20px; flex-wrap:wrap;
+    max-width:1240px; margin:0 auto;
+  }
+  .wordmark{ display:flex; flex-direction:column; gap:2px; }
+  .wordmark .brand{
+    font-size:30px; line-height:1; letter-spacing:.03em;
+  }
+  .wordmark .brand span{ color: var(--red); }
+  .wordmark .sub{
+    font-size:12.5px; color:#c7d0e3; letter-spacing:.08em; text-transform:uppercase; font-weight:500;
+  }
+  .run-status{
+    text-align:right; font-size:12px; color:#aab6d1;
+  }
+  .run-status .dot{
+    display:inline-block; width:7px; height:7px; border-radius:1px; background:var(--green); margin-right:6px;
+  }
+  .run-status strong{ color:#fff; font-weight:600; }
+  .run-status button{
+    margin-top:6px; background:none; border:1px solid rgba(255,255,255,.3); color:#fff;
+    font-size:11px; padding:4px 10px; cursor:pointer;
+  }
+
+  /* ---------- stats strip ---------- */
+  .stats{
+    max-width:1240px; margin: -18px auto 0; padding: 0 28px;
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
+  }
+  .stat{
+    background:var(--surface); border:1px solid var(--grey-line); box-shadow:var(--shadow);
+    padding:14px 16px; display:flex; flex-direction:column; gap:6px;
+  }
+  .stat .n{ font-family:"IBM Plex Mono"; font-size:26px; font-weight:500; font-variant-numeric:tabular-nums; }
+  .stat .l{ font-size:11.5px; text-transform:uppercase; letter-spacing:.07em; color:var(--text-dim); font-weight:500; }
+  .stat.in .n{ color:var(--green); }
+  .stat.out .n{ color:var(--red); }
+  .stat.check .n{ color:var(--amber); }
+
+  /* ---------- toolbar ---------- */
+  main{ max-width:1240px; margin:0 auto; padding: 22px 28px 80px; }
+  .toolbar{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:18px;
+  }
+  .search{
+    flex:1 1 220px; min-width:180px;
+    display:flex; align-items:center; gap:8px;
+    background:var(--surface); border:1px solid var(--grey-line-2);
+    padding:9px 12px; font-size:13.5px; color:var(--text);
+  }
+  .search input{ border:none; outline:none; background:none; flex:1; font: inherit; color:inherit; }
+  .search svg{ flex:none; opacity:.55; }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{
+    border:1px solid var(--grey-line-2); background:var(--surface); color:var(--text-dim);
+    font-size:12px; font-weight:500; padding:7px 12px; cursor:pointer; letter-spacing:.02em;
+    display:flex; align-items:center; gap:6px;
+  }
+  .chip .c{ font-family:"IBM Plex Mono"; opacity:.7; }
+  .chip.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+  .source-select{
+    border:1px solid var(--grey-line-2); background:var(--surface); color:var(--text-dim);
+    font-size:12px; font-weight:500; padding:8px 10px; cursor:pointer; letter-spacing:.02em;
+  }
+  .btn{
+    border:none; cursor:pointer; font:inherit; font-weight:600; letter-spacing:.02em;
+    padding:9px 16px; font-size:13px;
+  }
+  .btn-primary{ background:var(--red); color:#fff; }
+  .btn-primary:hover{ background:#a80d26; }
+  .btn-ghost{ background:transparent; border:1px solid var(--grey-line-2); color:var(--text); }
+  .btn-ghost:hover{ border-color: var(--navy-soft); }
+
+  /* ---------- empty / loading ---------- */
+  .empty{
+    background:var(--surface); border:1px dashed var(--grey-line-2);
+    padding:60px 20px; text-align:center; color:var(--text-dim); font-size:13.5px;
+  }
+  .empty b{ display:block; color:var(--text); font-size:16px; margin-bottom:6px; font-weight:600; }
+
+  /* ---------- grid ---------- */
+  .grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(268px,1fr)); gap:14px;
+  }
+  .card{
+    background:var(--surface); border:1px solid var(--grey-line);
+    box-shadow:var(--shadow); display:flex; flex-direction:column; overflow:hidden;
+  }
+  .card-media{
+    height:150px; background:var(--grey-bg); position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center;
+    border-bottom:1px solid var(--grey-line);
+  }
+  .card-media img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .card-media .ph{
+    font-family:"Big Shoulders Display"; font-weight:800; font-size:15px; color:var(--text-faint);
+    letter-spacing:.06em; text-transform:uppercase; text-align:center; padding:0 12px;
+  }
+  .site-badge{
+    position:absolute; top:8px; left:8px;
+    background:var(--navy); color:#fff; font-size:10px; font-weight:600; letter-spacing:.06em;
+    text-transform:uppercase; padding:3px 7px;
+  }
+  .status-pill{
+    position:absolute; top:8px; right:8px;
+    font-size:10px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+    padding:3px 8px; display:flex; align-items:center; gap:4px;
+  }
+  .status-pill.in{ background:var(--green-soft); color:var(--green); }
+  .status-pill.out{ background:var(--red-soft); color:var(--red); }
+  .status-pill.check{ background:var(--amber-soft); color:var(--amber); }
+  .status-pill.new{ background:var(--grey-bg); color:var(--text-dim); border:1px solid var(--grey-line-2); }
+  .status-pill .d{ width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+  .card-body{ padding:12px 14px 14px; display:flex; flex-direction:column; gap:8px; flex:1; }
+  .card-title-row{ display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; }
+  .card-code{
+    font-family:"IBM Plex Mono"; font-size:10.5px; font-weight:600; letter-spacing:.03em;
+    color:var(--navy-soft); border:1px solid var(--grey-line-2); padding:2px 6px; flex:none;
+  }
+  .card-title{ font-size:14px; font-weight:600; line-height:1.3; }
+  .card-brand{ font-size:11.5px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; }
+  .card-price{ font-family:"IBM Plex Mono"; font-size:17px; font-weight:500; }
+  .card-price .cur{ font-size:11px; color:var(--text-dim); margin-right:2px; }
+
+  .sizes{ display:flex; flex-wrap:wrap; gap:4px; }
+  .size{
+    font-family:"IBM Plex Mono"; font-size:10.5px; padding:3px 6px; border:1px solid var(--grey-line-2);
+    color:var(--text-faint); text-decoration:line-through;
+  }
+  .size.avail{ border-color:var(--green); color:var(--green); text-decoration:none; font-weight:500; }
+
+  .card-meta{ font-size:11px; color:var(--text-faint); display:flex; justify-content:space-between; gap:6px; }
+  .card-note{ font-size:11.5px; color:var(--text-dim); font-style:italic; }
+
+  .card-links{ display:flex; gap:10px; flex-wrap:wrap; font-size:11.5px; }
+  .card-links a{ color:var(--navy-soft); text-decoration:none; border-bottom:1px solid transparent; }
+  .card-links a:hover{ border-color:var(--navy-soft); }
+  .link-act{
+    background:none; border:none; padding:0; margin:0; font:inherit; font-size:11.5px;
+    color:var(--navy-soft); cursor:pointer; border-bottom:1px solid transparent;
+  }
+  .link-act:hover{ border-color:var(--navy-soft); }
+
+  .src-tag{
+    font-family:"IBM Plex Mono"; font-size:9.5px; font-weight:600; letter-spacing:.04em; text-transform:uppercase;
+    padding:2px 6px; border:1px solid var(--grey-line-2); color:var(--text-faint); flex:none;
+  }
+  .src-tag.auto{ border-color:var(--navy-soft); color:var(--navy-soft); }
+  .src-tag.manual{ border-color:var(--amber); color:var(--amber); background:var(--amber-soft); }
+
+  .card-actions{
+    margin-top:auto; display:flex; gap:6px; padding-top:10px; border-top:1px solid var(--grey-line);
+  }
+  .icon-btn{
+    flex:1; background:none; border:1px solid var(--grey-line-2); color:var(--text-dim);
+    font-size:11px; font-weight:500; padding:7px 4px; cursor:pointer; letter-spacing:.02em;
+  }
+  .icon-btn:hover{ border-color:var(--navy-soft); color:var(--text); }
+  .icon-btn.danger:hover{ border-color:var(--red); color:var(--red); }
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(13,20,38,.55); display:none;
+    align-items:flex-start; justify-content:center; padding:40px 16px; overflow-y:auto; z-index:50;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:var(--surface); width:100%; max-width:520px; border:1px solid var(--grey-line);
+    box-shadow: 0 20px 60px rgba(0,0,0,.35);
+  }
+  .modal.modal-sm{ max-width:380px; }
+  .field-row{ display:flex; align-items:center; gap:8px; }
+  .field label.check-label{
+    display:flex; align-items:center; gap:8px; cursor:pointer; text-transform:none; letter-spacing:0; font-weight:600; color:var(--text);
+  }
+  .field label.check-label input{ width:auto; margin:0; accent-color:var(--navy); }
+  .manual-block{
+    display:none; flex-direction:column; gap:12px; padding:12px; margin-top:2px;
+    background:var(--grey-bg); border:1px solid var(--grey-line-2);
+  }
+  .manual-toggle-field{ border-top:1px solid var(--grey-line); padding-top:14px; }
+  .modal-head{
+    background:var(--navy); color:#fff; padding:16px 20px; display:flex; justify-content:space-between; align-items:center;
+  }
+  .modal-head h2{ margin:0; font-size:16px; font-family:"Big Shoulders Display"; text-transform:uppercase; letter-spacing:.03em; font-weight:800;}
+  .modal-head button{ background:none; border:none; color:#c7d0e3; font-size:20px; cursor:pointer; line-height:1; }
+  .modal-body{ padding:18px 20px; display:flex; flex-direction:column; gap:12px; max-height:70vh; overflow-y:auto; }
+  .field{ display:flex; flex-direction:column; gap:5px; }
+  .field label{ font-size:11.5px; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--text-dim); }
+  .field .hint{ font-size:11px; color:var(--text-faint); font-weight:400; text-transform:none; letter-spacing:0; }
+  .field input, .field select{
+    border:1px solid var(--grey-line-2); background:var(--grey-bg); color:var(--text);
+    padding:9px 10px; font: 13.5px "IBM Plex Sans"; outline:none;
+  }
+  .field input:focus, .field select:focus{ border-color:var(--navy-soft); }
+  .row2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .modal-foot{ padding:14px 20px 20px; display:flex; justify-content:flex-end; gap:8px; }
+  .error-msg{ font-size:12px; color:var(--red); display:none; }
+  .error-msg.show{ display:block; }
+
+  .toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%);
+    background:var(--navy); color:#fff; padding:10px 18px; font-size:13px; font-weight:500;
+    box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:60;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+
+  footer{
+    max-width:1240px; margin:0 auto; padding:0 28px 40px; color:var(--text-faint); font-size:11.5px; line-height:1.6;
+  }
+
+  @media (max-width:720px){
+    .stats{ grid-template-columns:repeat(2,1fr); }
+    .row2{ grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ================= LOGIN GATE ================= -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="brand display">STOCK<span>USA</span></div>
+    <p>İdarəetmə panelinə daxil olmaq üçün giriş edin.</p>
+    <div class="field">
+      <label>E-poçt</label>
+      <input id="loginEmail" type="email" autocomplete="username">
+    </div>
+    <div class="field">
+      <label>Parol</label>
+      <input id="loginPass" type="password" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" id="loginBtn">Daxil ol</button>
+    <div class="login-err" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- ================= APP (shown after successful login) ================= -->
+<div id="appRoot">
+
+<header>
+  <div class="header-row">
+    <div class="wordmark">
+      <div class="brand display">STOCK<span>USA</span> TRACKER</div>
+      <div class="sub">Instagram məhsulları · stok, ölçü &amp; qiymət monitorinqi</div>
+    </div>
+    <div class="run-status">
+      <div><span class="dot"></span>Avtomatik yoxlama: <strong id="lastRun">—</strong></div>
+      <div id="db-state" style="margin-top:3px;">Bağlanır…</div>
+      <button id="logoutBtn">Çıxış</button>
+    </div>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat">
+    <div class="n mono" id="statTotal">0</div>
+    <div class="l">Cəmi məhsul</div>
+  </div>
+  <div class="stat in">
+    <div class="n mono" id="statIn">0</div>
+    <div class="l">Stokda</div>
+  </div>
+  <div class="stat out">
+    <div class="n mono" id="statOut">0</div>
+    <div class="l">Stokda yoxdur</div>
+  </div>
+  <div class="stat check">
+    <div class="n mono" id="statCheck">0</div>
+    <div class="l">Yoxlama gözləyir</div>
+  </div>
+</div>
+
+<main>
+  <div class="toolbar">
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input id="searchInput" placeholder="Məhsul, brend və ya kod axtar…" autocomplete="off">
+    </div>
+    <div class="chips" id="filterChips">
+      <button class="chip active" data-filter="all">Hamısı <span class="c" id="cAll">0</span></button>
+      <button class="chip" data-filter="in">Stokda <span class="c" id="cIn">0</span></button>
+      <button class="chip" data-filter="out">Bitib <span class="c" id="cOut">0</span></button>
+      <button class="chip" data-filter="check">Yoxlanılır <span class="c" id="cCheck">0</span></button>
+    </div>
+    <select id="sourceFilter" class="source-select">
+      <option value="all">Mənbə: Hamısı</option>
+      <option value="auto">Yalnız avtomatik</option>
+      <option value="manual">Yalnız əl ilə</option>
+    </select>
+    <button class="btn btn-primary" id="openAdd">+ Məhsul əlavə et</button>
+  </div>
+
+  <div id="emptyState" class="empty" style="display:none;">
+    <b>Hələ məhsul yoxdur</b>
+    İnstagramda paylaşdığınız ilk məhsulu əlavə edin — mənbə linkini yazın, sistem stok və ölçü statusunu avtomatik izləməyə çalışacaq; alınmasa özünüz əl ilə daxil edə bilərsiniz.
+  </div>
+
+  <div class="grid" id="grid"></div>
+</main>
+
+<footer>
+  Qiymət və stok statusu mənbə linkdən avtomatik oxunmağa çalışılır (bot hər 30 dəqiqədə bir GitHub Actions üzərində işləyir). Bəzi saytlar (JavaScript ilə yüklənən və ya bot-qorumalı) avtomatik yoxlamaya uyğun deyil — bu halda kartda "AVTOMATIK" əvəzinə "ƏL İLƏ" nişanı görünür və məlumatı "Redaktə" düyməsindən özünüz daxil edirsiniz. Ölçüsü olmayan məhsullar üçün (kosmetika, ətir və s.) əlavə edərkən "Bu məhsulda ölçü yoxdur" seçimini işarələyin.
+</footer>
+
+</div><!-- /appRoot -->
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modalTitle">Məhsul əlavə et <span id="modalCode" class="mono" style="font-size:12px;font-weight:600;color:#c7d0e3;text-transform:none;letter-spacing:.02em;"></span></h2>
+      <button id="closeModal" aria-label="Bağla">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Məhsul adı *</label>
+        <input id="f_name" placeholder="Məs: Nike Dunk Low Panda">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Brend</label>
+          <input id="f_brand" placeholder="Məs: Nike">
+        </div>
+        <div class="field">
+          <label>Mənbə sayt</label>
+          <select id="f_site">
+            <option>Simon (shop.simon.com)</option>
+            <option>SecretSale</option>
+            <option>6pm</option>
+            <option>Jomashop</option>
+            <option>Outletcity</option>
+            <option>Nordstrom</option>
+            <option>Giglio</option>
+            <option>Digər</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Mənbə linki (konkret məhsul səhifəsi) *</label>
+        <input id="f_url" placeholder="https://...">
+        <div class="hint">Yadda saxlayandan sonra sistem bu linkdən stok və qiymət məlumatını avtomatik tapmağa çalışacaq — nəticə adətən 30 dəqiqəyə qədər gələcək. Alınmasa "Stok/ölçünü özüm daxil edim" seçimini işarələməli olacaqsınız.</div>
+      </div>
+      <div class="field">
+        <label>Instagram post linki <span class="hint">(istəyə bağlı)</span></label>
+        <input id="f_ig" placeholder="https://instagram.com/p/...">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Qiymət</label>
+          <input id="f_price" type="number" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>Valyuta</label>
+          <select id="f_currency">
+            <option>AZN</option>
+            <option>USD</option>
+            <option>EUR</option>
+          </select>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:-6px;">Sizin izlədiyiniz qiymət — aşağıda "Müştəriyə qiymət göstərilsin" işarələnərsə bu rəqəm (və ya "Fərqli vitrin qiyməti" doldurulubsa, o) vitrində göstəriləcək.</div>
+      <div class="row2">
+        <div class="field">
+          <label>Fərqli vitrin qiyməti <span class="hint">(istəyə bağlı, override)</span></label>
+          <input id="f_saleprice" type="number" step="0.01" placeholder="0.00">
+        </div>
+        <div class="field">
+          <label>Valyuta</label>
+          <select id="f_salecurrency">
+            <option>AZN</option>
+            <option>USD</option>
+            <option>EUR</option>
+          </select>
+        </div>
+      </div>
+      <div class="hint" style="margin-top:-6px;">Yalnız yuxarıdakı qiymətdən FƏRQLİ bir vitrin qiyməti göstərmək istəsəniz doldurun — boş qalsa yuxarıdakı qiymət istifadə olunacaq. Mənbə linki və satıcı sayt heç vaxt müştəriyə göstərilmir.</div>
+      <div class="field">
+        <label class="check-label"><input type="checkbox" id="f_show_price"> Müştəriyə qiymət göstərilsin</label>
+        <div class="hint">İşarələsəniz, yuxarıdakı qiymət (və ya override) vitrində göstərilir. İşarələməsəniz, vitrində "Qiymət üçün müraciət edin" yazılacaq.</div>
+      </div>
+      <div class="field">
+        <label>Şəkil <span class="hint">(istəyə bağlı)</span></label>
+        <input type="file" id="f_image_file" accept="image/jpeg,image/png,image/webp" style="display:none;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <button type="button" class="btn btn-ghost" id="f_image_pick_btn">Şəkil seç</button>
+          <button type="button" class="btn btn-ghost" id="f_image_clear_btn" style="display:none;">Şəkli sil</button>
+        </div>
+        <div id="imgPreviewWrap" style="display:none; margin-top:10px; align-items:center; gap:10px;">
+          <img id="imgPreviewThumb" style="width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--grey-line);">
+          <div id="imgPreviewMsg" style="font-size:11.5px;"></div>
+        </div>
+        <div class="hint" style="text-transform:none; font-weight:400; margin-top:6px;">Telefonunuzdan və ya kompüterdən birbaşa şəkil faylı seçin (JPG/PNG/WEBP). Şəkil avtomatik kiçildilib yadda saxlanılacaq.</div>
+      </div>
+
+      <div class="field" style="border-top:1px solid var(--grey-line); padding-top:14px;">
+        <label class="check-label"><input type="checkbox" id="f_no_sizes"> Bu məhsulda ölçü yoxdur <span class="hint" style="text-transform:none;font-weight:400;">(kosmetika, ətir, aksesuar və s.)</span></label>
+        <div class="hint">İşarələsəniz, ölçü siyahısı heç yerdə göstərilməyəcək — yalnız stokda olub-olmadığı izlənəcək.</div>
+      </div>
+
+      <div class="field" style="border-top:1px solid var(--grey-line); padding-top:14px;">
+        <label>Rəng seçimləri <span class="hint">(istəyə bağlı — avtomatik yoxlanmır, özünüz daxil edirsiniz)</span></label>
+        <div style="display:flex; flex-direction:column; gap:12px; margin-top:8px;">
+          <div class="field">
+            <label>Stokda olan rənglər <span class="hint">vergüllə ayırın</span></label>
+            <input id="f_colors_in" placeholder="Məs: Qara, Ağ">
+          </div>
+          <div class="field">
+            <label>Bitmiş rənglər <span class="hint">vergüllə ayırın, istəyə bağlı</span></label>
+            <input id="f_colors_out" placeholder="Məs: Qırmızı">
+          </div>
+        </div>
+        <div class="hint" style="text-transform:none;font-weight:400;margin-top:2px;">Boş saxlasanız, vitrində rəng seçimi göstərilməyəcək.</div>
+      </div>
+
+      <div class="field manual-toggle-field">
+        <label class="check-label"><input type="checkbox" id="f_manual_toggle"> Stok / ölçünü özüm daxil edim</label>
+        <div class="hint">Sayt avtomatik yoxlamaya uyğun deyilsə, bunu işarələyib məlumatı özünüz yazın — bu məhsul "Əl ilə" olaraq işarələnəcək və avtomatik bot artıq onu dəyişməyəcək.</div>
+      </div>
+      <div class="manual-block" id="manualFields">
+        <div class="field">
+          <label>Stok statusu</label>
+          <select id="f_manual_instock">
+            <option value="in">Stokda</option>
+            <option value="out">Bitib</option>
+          </select>
+        </div>
+        <div id="manualSizeFields" style="display:flex; flex-direction:column; gap:12px;">
+          <div class="field">
+            <label>Mövcud ölçülər <span class="hint">vergüllə ayırın</span></label>
+            <input id="f_manual_sizes_in" placeholder="Məs: M, L">
+          </div>
+          <div class="field">
+            <label>Bitmiş ölçülər <span class="hint">vergüllə ayırın, istəyə bağlı</span></label>
+            <input id="f_manual_sizes_out" placeholder="Məs: S, XL">
+          </div>
+        </div>
+      </div>
+
+      <div class="error-msg" id="formError"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="cancelModal">Ləğv et</button>
+      <button class="btn btn-primary" id="saveModal">Yadda saxla</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="confirmOverlay">
+  <div class="modal modal-sm">
+    <div class="modal-head">
+      <h2>Silinsin?</h2>
+      <button id="confirmClose" aria-label="Bağla">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="confirmMsg" style="font-size:13.5px; line-height:1.5;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" id="confirmCancel">Ləğv et</button>
+      <button class="btn btn-primary" id="confirmOk">Sil</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- Firebase (compat build) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+(function(){
+  "use strict";
+
+  firebase.initializeApp(FIREBASE_CONFIG);
+  var auth = firebase.auth();
+  var state = { db: null, products: [], filter: "all", sourceFilter: "all", search: "", editingId: null };
+
+  function fmtMoney(p, c){
+    if(p===null || p===undefined || p==="") return "—";
+    return (c||"USD") + " " + Number(p).toFixed(2);
+  }
+  function fmtRel(iso){
+    if(!iso) return "yoxlanmayıb";
+    var d = new Date(iso), diff = Math.round((Date.now()-d.getTime())/60000);
+    if(diff < 1) return "indicə";
+    if(diff < 60) return diff+" dəq əvvəl";
+    var h = Math.round(diff/60);
+    if(h < 24) return h+" saat əvvəl";
+    return Math.round(h/24)+" gün əvvəl";
+  }
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function toast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast._h);
+    toast._h = setTimeout(function(){ t.classList.remove("show"); }, 2400);
+  }
+
+  function statusOf(p){
+    if(p.status === "needs_manual_check") return "check";
+    if(p.status === "new" || p.inStock===null || p.inStock===undefined) return "new";
+    return p.inStock ? "in" : "out";
+  }
+  function statusLabel(k){
+    return {in:"Stokda", out:"Bitib", check:"Yoxlanılır", new:"Yeni"}[k];
+  }
+  function nextCode(){
+    var max = 0;
+    state.products.forEach(function(p){
+      var m = /^STK-(\d+)$/.exec(p.code || "");
+      if(m){ var n = parseInt(m[1], 10); if(n > max) max = n; }
+    });
+    var n = String(max + 1);
+    while(n.length < 4) n = "0" + n;
+    return "STK-" + n;
+  }
+  function sourceTag(p){
+    if(p.dataSource === "manual") return '<span class="src-tag manual">Əl ilə</span>';
+    if(p.dataSource === "auto") return '<span class="src-tag auto">Avtomatik</span>';
+    return '';
+  }
+
+  function render(){
+    var list = state.products.slice();
+    var q = state.search.trim().toLowerCase();
+    if(q){
+      list = list.filter(function(p){
+        return (p.name||"").toLowerCase().indexOf(q)>-1 || (p.brand||"").toLowerCase().indexOf(q)>-1 || (p.code||"").toLowerCase().indexOf(q)>-1;
+      });
+    }
+    var counts = {all:state.products.length, in:0, out:0, check:0};
+    state.products.forEach(function(p){
+      var s = statusOf(p);
+      if(s==="in") counts.in++;
+      else if(s==="out") counts.out++;
+      else if(s==="check" || s==="new") counts.check++;
+    });
+    document.getElementById("cAll").textContent = counts.all;
+    document.getElementById("cIn").textContent = counts.in;
+    document.getElementById("cOut").textContent = counts.out;
+    document.getElementById("cCheck").textContent = counts.check;
+    document.getElementById("statTotal").textContent = counts.all;
+    document.getElementById("statIn").textContent = counts.in;
+    document.getElementById("statOut").textContent = counts.out;
+    document.getElementById("statCheck").textContent = counts.check;
+
+    if(state.filter !== "all"){
+      list = list.filter(function(p){ return statusOf(p) === state.filter; });
+    }
+    if(state.sourceFilter !== "all"){
+      list = list.filter(function(p){ return p.dataSource === state.sourceFilter; });
+    }
+
+    var grid = document.getElementById("grid");
+    var empty = document.getElementById("emptyState");
+    if(list.length === 0){
+      grid.innerHTML = "";
+      empty.style.display = "block";
+      empty.querySelector("b").textContent = state.products.length ? "Uyğun məhsul tapılmadı" : "Hələ məhsul yoxdur";
+      return;
+    }
+    empty.style.display = "none";
+
+    grid.innerHTML = list.map(cardHtml).join("");
+  }
+
+  function cardHtml(p){
+    var s = statusOf(p);
+    var noSizes = p.hasSizes === false;
+    var sizesAll = p.sizesAll || [];
+    var sizesInStock = p.sizesInStock || [];
+    var sizesHtml = sizesAll.length ? sizesAll.map(function(sz){
+      var avail = sizesInStock.indexOf(sz) > -1;
+      return '<span class="size'+(avail?' avail':'')+'">'+escapeHtml(sz)+'</span>';
+    }).join("") : '<span class="card-note">ölçülər hələ aşkarlanmayıb</span>';
+
+    var colorsAll = p.colorsAll || [];
+    var colorsInStock = p.colorsInStock || [];
+    var colorsHtml = colorsAll.length ? colorsAll.map(function(c){
+      var avail = colorsInStock.indexOf(c) > -1;
+      return '<span class="size'+(avail?' avail':'')+'">'+escapeHtml(c)+'</span>';
+    }).join("") : "";
+
+    var media = p.imageUrl
+      ? '<img src="'+escapeHtml(p.imageUrl)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      : '';
+    var placeholder = '<div class="ph" style="'+(p.imageUrl?'display:none':'display:flex')+'">'+escapeHtml(p.name||"?")+'</div>';
+
+    return ''
+    +'<div class="card" data-id="'+escapeHtml(p.id)+'">'
+      +'<div class="card-media">'
+        + media + placeholder
+        +'<span class="site-badge">'+escapeHtml((p.site||"").split(" (")[0])+'</span>'
+        +'<span class="status-pill '+s+'"><span class="d"></span>'+statusLabel(s)+'</span>'
+      +'</div>'
+      +'<div class="card-body">'
+        +'<div>'
+          +'<div class="card-title-row">'
+            +(p.code? '<span class="card-code">'+escapeHtml(p.code)+'</span>':'')
+            +'<span class="card-title">'+escapeHtml(p.name)+'</span>'
+          +'</div>'
+          +(p.brand? '<div class="card-brand">'+escapeHtml(p.brand)+'</div>':'')
+        +'</div>'
+        +'<div class="card-price mono"><span class="cur">'+escapeHtml(p.currency||"AZN")+'</span>'+(p.price!=null?Number(p.price).toFixed(2):'—')
+          +(p.salePrice==null && p.price!=null && p.showPrice? ' <span style="font-size:10px;color:var(--text-dim);font-family:\'IBM Plex Sans\';font-weight:400;">(vitrində göstərilir)</span>':'')
+        +'</div>'
+        +(p.salePrice!=null? '<div style="font-size:11px;color:var(--text-dim);">Fərqli vitrin qiyməti: <span class="mono">'+escapeHtml(p.saleCurrency||"AZN")+' '+Number(p.salePrice).toFixed(2)+'</span></div>':'')
+        +(!p.showPrice? '<div style="font-size:10.5px;color:var(--amber);">Müştəriyə qiymət göstərilmir — "Qiymət üçün müraciət edin" yazılacaq</div>':'')
+        +(noSizes ? '' : '<div class="sizes">'+sizesHtml+'</div>')
+        +(colorsHtml? '<div class="sizes">'+colorsHtml+'</div>':'')
+        +(p.lastNote? '<div class="card-note">'+escapeHtml(p.lastNote)+'</div>':'')
+        +'<div class="card-meta"><span>Son yoxlama: '+fmtRel(p.lastCheckedAt)+'</span>'+sourceTag(p)+'</div>'
+        +'<div class="card-links">'
+          +'<a href="'+escapeHtml(p.sourceUrl)+'" target="_blank" rel="noopener">Mənbə sayt ↗</a>'
+          +(p.instagramUrl? '<a href="'+escapeHtml(p.instagramUrl)+'" target="_blank" rel="noopener">Instagram ↗</a>':'')
+          +(p.dataSource!=="manual" ? '<button class="link-act" data-act="recheck">Yenidən yoxla ↻</button>':'')
+        +'</div>'
+        +'<div class="card-actions">'
+          +'<button class="icon-btn" data-act="toggle">'+(s==="out"?"Stokda qeyd et":"Bitib qeyd et")+'</button>'
+          +'<button class="icon-btn" data-act="edit">Redaktə</button>'
+          +'<button class="icon-btn danger" data-act="del">Sil</button>'
+        +'</div>'
+      +'</div>'
+    +'</div>';
+  }
+
+  document.getElementById("grid").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-act]");
+    if(!btn) return;
+    var card = e.target.closest(".card");
+    var id = card.getAttribute("data-id");
+    var p = state.products.find(function(x){ return x.id === id; });
+    if(!p) return;
+    if(btn.dataset.act === "edit") openModal(p);
+    if(btn.dataset.act === "del") removeProduct(p);
+    if(btn.dataset.act === "toggle") toggleStock(p);
+    if(btn.dataset.act === "recheck") recheckProduct(p);
+  });
+
+  function toggleStock(p){
+    var newVal = !(statusOf(p) === "in");
+    var patch = { inStock:newVal, status:"ok", dataSource:"manual", lastCheckedAt:new Date().toISOString(), lastNote:"Əl ilə yenilənib" };
+    if(state.db) state.db.collection("products").doc(p.id).update(patch).catch(function(err){ toast("Yadda saxlanmadı: "+err.code); });
+  }
+  function recheckProduct(p){
+    var patch = { checkRequested:true, status:"needs_manual_check", lastNote:"Yoxlama sırasındadır…" };
+    if(state.db) state.db.collection("products").doc(p.id).update(patch).catch(function(err){ toast("Sıraya əlavə olunmadı: "+err.code); });
+    toast("Yoxlama sıraya əlavə olundu — nəticə adətən 30 dəqiqəyə qədər gələcək");
+  }
+  var confirmOverlay = document.getElementById("confirmOverlay");
+  var confirmAction = null;
+  function askConfirm(msg, onOk){
+    document.getElementById("confirmMsg").textContent = msg;
+    confirmAction = onOk;
+    confirmOverlay.classList.add("open");
+  }
+  function closeConfirm(){ confirmOverlay.classList.remove("open"); confirmAction = null; }
+  document.getElementById("confirmClose").addEventListener("click", closeConfirm);
+  document.getElementById("confirmCancel").addEventListener("click", closeConfirm);
+  confirmOverlay.addEventListener("click", function(e){ if(e.target === confirmOverlay) closeConfirm(); });
+  document.getElementById("confirmOk").addEventListener("click", function(){
+    var fn = confirmAction;
+    closeConfirm();
+    if(fn) fn();
+  });
+
+  function removeProduct(p){
+    askConfirm('"'+p.name+'" silinsin? Bu əməliyyat geri qaytarılmır.', function(){
+      if(state.db) state.db.collection("products").doc(p.id).delete().catch(function(err){ toast("Silinmədi: "+err.code); });
+    });
+  }
+
+  document.getElementById("filterChips").addEventListener("click", function(e){
+    var chip = e.target.closest(".chip");
+    if(!chip) return;
+    document.querySelectorAll(".chip").forEach(function(c){ c.classList.remove("active"); });
+    chip.classList.add("active");
+    state.filter = chip.dataset.filter;
+    render();
+  });
+  document.getElementById("sourceFilter").addEventListener("change", function(e){
+    state.sourceFilter = e.target.value; render();
+  });
+  document.getElementById("searchInput").addEventListener("input", function(e){
+    state.search = e.target.value; render();
+  });
+
+  var overlay = document.getElementById("overlay");
+  function openModal(p){
+    state.editingId = p ? p.id : null;
+    document.getElementById("modalTitle").firstChild.textContent = p ? "Məhsulu redaktə et " : "Məhsul əlavə et ";
+    document.getElementById("modalCode").textContent = p && p.code ? p.code : (p ? "" : "kod avtomatik yaranacaq");
+    document.getElementById("f_name").value = p ? p.name||"" : "";
+    document.getElementById("f_brand").value = p ? p.brand||"" : "";
+    document.getElementById("f_site").value = p ? (p.site||"Digər") : "Simon (shop.simon.com)";
+    document.getElementById("f_url").value = p ? p.sourceUrl||"" : "";
+    document.getElementById("f_ig").value = p ? p.instagramUrl||"" : "";
+    document.getElementById("f_price").value = p && p.price!=null ? p.price : "";
+    document.getElementById("f_currency").value = p ? p.currency||"USD" : "USD";
+    document.getElementById("f_saleprice").value = p && p.salePrice!=null ? p.salePrice : "";
+    document.getElementById("f_salecurrency").value = p ? p.saleCurrency||"AZN" : "AZN";
+    document.getElementById("f_show_price").checked = !!(p && p.showPrice);
+    currentImageDataUrl = p ? (p.imageUrl || "") : "";
+    updateImagePreview();
+
+    var isManual = !!(p && p.dataSource === "manual");
+    var manualToggle = document.getElementById("f_manual_toggle");
+    var manualFields = document.getElementById("manualFields");
+    manualToggle.checked = isManual;
+    manualFields.style.display = isManual ? "flex" : "none";
+    document.getElementById("f_manual_instock").value = (p && p.inStock === false) ? "out" : "in";
+    var inStockSizes = (p && p.sizesInStock) ? p.sizesInStock : [];
+    var allSizes = (p && p.sizesAll) ? p.sizesAll : [];
+    document.getElementById("f_manual_sizes_in").value = inStockSizes.join(", ");
+    document.getElementById("f_manual_sizes_out").value = allSizes.filter(function(s){ return inStockSizes.indexOf(s) === -1; }).join(", ");
+
+    var noSizes = !!(p && p.hasSizes === false);
+    document.getElementById("f_no_sizes").checked = noSizes;
+    document.getElementById("manualSizeFields").style.display = noSizes ? "none" : "flex";
+
+    var inStockColors = (p && p.colorsInStock) ? p.colorsInStock : [];
+    var allColors = (p && p.colorsAll) ? p.colorsAll : [];
+    document.getElementById("f_colors_in").value = inStockColors.join(", ");
+    document.getElementById("f_colors_out").value = allColors.filter(function(c){ return inStockColors.indexOf(c) === -1; }).join(", ");
+
+    document.getElementById("formError").classList.remove("show");
+    overlay.classList.add("open");
+    document.getElementById("f_name").focus();
+  }
+  function closeModal(){ overlay.classList.remove("open"); }
+  document.getElementById("openAdd").addEventListener("click", function(){ openModal(null); });
+  document.getElementById("closeModal").addEventListener("click", closeModal);
+  document.getElementById("cancelModal").addEventListener("click", closeModal);
+  overlay.addEventListener("click", function(e){ if(e.target === overlay) closeModal(); });
+  document.getElementById("f_manual_toggle").addEventListener("change", function(e){
+    document.getElementById("manualFields").style.display = e.target.checked ? "flex" : "none";
+  });
+  document.getElementById("f_no_sizes").addEventListener("change", function(e){
+    document.getElementById("manualSizeFields").style.display = e.target.checked ? "none" : "flex";
+  });
+  var currentImageDataUrl = "";
+  function updateImagePreview(){
+    var wrap = document.getElementById("imgPreviewWrap");
+    var thumb = document.getElementById("imgPreviewThumb");
+    var msg = document.getElementById("imgPreviewMsg");
+    var clearBtn = document.getElementById("f_image_clear_btn");
+    if(!currentImageDataUrl){
+      wrap.style.display = "none";
+      clearBtn.style.display = "none";
+      return;
+    }
+    wrap.style.display = "flex";
+    clearBtn.style.display = "";
+    thumb.src = currentImageDataUrl;
+    var approxKb = Math.round(currentImageDataUrl.length * 0.75 / 1024);
+    msg.style.color = "var(--ok, #1a7f37)";
+    msg.textContent = "✓ Şəkil hazırdır (~"+approxKb+" KB)";
+  }
+  function resizeAndCompress(file, cb){
+    var msg = document.getElementById("imgPreviewMsg");
+    var wrap = document.getElementById("imgPreviewWrap");
+    wrap.style.display = "flex";
+    msg.style.color = "var(--muted)";
+    msg.textContent = "Şəkil hazırlanır…";
+    var reader = new FileReader();
+    reader.onerror = function(){ msg.style.color="var(--danger,#c6102e)"; msg.textContent = "✗ Şəkil oxuna bilmədi"; };
+    reader.onload = function(){
+      var img = new Image();
+      img.onerror = function(){ msg.style.color="var(--danger,#c6102e)"; msg.textContent = "✗ Bu fayl şəkil kimi açılmadı"; };
+      img.onload = function(){
+        var maxDims = [900, 640, 460];
+        var qualities = [0.72, 0.6, 0.48];
+        var attempt = 0;
+        function tryEncode(){
+          var maxDim = maxDims[Math.min(attempt, maxDims.length-1)];
+          var quality = qualities[Math.min(attempt, qualities.length-1)];
+          var w = img.naturalWidth, h = img.naturalHeight;
+          var scale = Math.min(1, maxDim / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w*scale)), ch = Math.max(1, Math.round(h*scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = cw; canvas.height = ch;
+          var ctx = canvas.getContext("2d");
+          ctx.fillStyle = "#fff"; ctx.fillRect(0,0,cw,ch);
+          ctx.drawImage(img, 0, 0, cw, ch);
+          var dataUrl = canvas.toDataURL("image/jpeg", quality);
+          if(dataUrl.length > 260000 && attempt < maxDims.length-1){
+            attempt++;
+            tryEncode();
+          } else {
+            cb(dataUrl);
+          }
+        }
+        tryEncode();
+      };
+      img.src = reader.result;
+    };
+    reader.readAsDataURL(file);
+  }
+  document.getElementById("f_image_pick_btn").addEventListener("click", function(){
+    document.getElementById("f_image_file").click();
+  });
+  document.getElementById("f_image_clear_btn").addEventListener("click", function(){
+    currentImageDataUrl = "";
+    document.getElementById("f_image_file").value = "";
+    updateImagePreview();
+  });
+  document.getElementById("f_image_file").addEventListener("change", function(e){
+    var file = e.target.files && e.target.files[0];
+    if(!file) return;
+    resizeAndCompress(file, function(dataUrl){
+      currentImageDataUrl = dataUrl;
+      updateImagePreview();
+    });
+  });
+  document.getElementById("saveModal").addEventListener("click", function(){
+    var name = document.getElementById("f_name").value.trim();
+    var url = document.getElementById("f_url").value.trim();
+    var errEl = document.getElementById("formError");
+    if(!name || !url){
+      errEl.textContent = "Məhsul adı və mənbə linki mütləqdir.";
+      errEl.classList.add("show");
+      return;
+    }
+    var priceRaw = document.getElementById("f_price").value;
+    var salePriceRaw = document.getElementById("f_saleprice").value;
+    var noSizes = document.getElementById("f_no_sizes").checked;
+    var data = {
+      name: name,
+      brand: document.getElementById("f_brand").value.trim(),
+      site: document.getElementById("f_site").value,
+      sourceUrl: url,
+      instagramUrl: document.getElementById("f_ig").value.trim(),
+      price: priceRaw === "" ? null : Number(priceRaw),
+      currency: document.getElementById("f_currency").value,
+      salePrice: salePriceRaw === "" ? null : Number(salePriceRaw),
+      saleCurrency: document.getElementById("f_salecurrency").value,
+      imageUrl: currentImageDataUrl,
+      hasSizes: !noSizes,
+      showPrice: document.getElementById("f_show_price").checked
+    };
+
+    (function(){
+      var cIn = document.getElementById("f_colors_in").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+      var cOut = document.getElementById("f_colors_out").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+      var cAll = cIn.slice();
+      cOut.forEach(function(c){ if(cAll.indexOf(c)===-1) cAll.push(c); });
+      data.colorsInStock = cIn;
+      data.colorsAll = cAll;
+    })();
+
+    if(document.getElementById("f_manual_toggle").checked){
+      if(noSizes){
+        data.sizesInStock = [];
+        data.sizesAll = [];
+      } else {
+        var inList = document.getElementById("f_manual_sizes_in").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+        var outList = document.getElementById("f_manual_sizes_out").value.split(",").map(function(s){ return s.trim(); }).filter(Boolean);
+        var allSizesNew = inList.slice();
+        outList.forEach(function(s){ if(allSizesNew.indexOf(s)===-1) allSizesNew.push(s); });
+        data.sizesInStock = inList;
+        data.sizesAll = allSizesNew;
+      }
+      data.inStock = document.getElementById("f_manual_instock").value === "in";
+      data.status = "ok";
+      data.dataSource = "manual";
+      data.checkRequested = false;
+      data.lastCheckedAt = new Date().toISOString();
+      data.lastNote = "Əl ilə daxil edilib";
+    } else if(noSizes){
+      data.sizesInStock = [];
+      data.sizesAll = [];
+    }
+
+    if(state.editingId){
+      if(state.db) state.db.collection("products").doc(state.editingId).update(data).catch(function(err){ toast("Yadda saxlanmadı: "+err.code); });
+      toast("Yeniləndi");
+    } else {
+      var id = "p_" + Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+      var defaults = {
+        id:id, code:nextCode(), sizesAll:[], sizesInStock:[], inStock:null, status:"new", dataSource:"pending",
+        checkRequested: !data.dataSource, lastCheckedAt:null, lastNote:"Hələ yoxlanmayıb", addedAt:new Date().toISOString()
+      };
+      var full = Object.assign(defaults, data);
+      if(state.db) state.db.collection("products").doc(id).set(full).catch(function(err){ toast("Yadda saxlanmadı: "+err.code); });
+      toast(data.dataSource === "manual" ? "Əlavə edildi (əl ilə izlənir)" : "Əlavə edildi — nəticə adətən 30 dəqiqəyə qədər gələcək");
+    }
+    closeModal();
+  });
+
+  // ---------- Firestore wiring (live) ----------
+  function bootApp(){
+    state.db = firebase.firestore();
+    document.getElementById("db-state").textContent = "Bağlıdır";
+    state.db.collection("products").orderBy("addedAt","desc").limit(500).onSnapshot(function(snap){
+      state.products = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+      computeLastRun(state.products);
+      render();
+    }, function(err){
+      document.getElementById("db-state").textContent = "Xəta: " + err.code;
+    });
+  }
+  function computeLastRun(docs){
+    var latest = null;
+    docs.forEach(function(p){
+      if(p.lastCheckedAt){
+        var t = new Date(p.lastCheckedAt).getTime();
+        if(!latest || t > latest) latest = t;
+      }
+    });
+    document.getElementById("lastRun").textContent = latest ? fmtRel(new Date(latest).toISOString()) : "hələ yoxdur";
+  }
+
+  // ---------- auth wiring ----------
+  document.getElementById("loginBtn").addEventListener("click", doLogin);
+  document.getElementById("loginPass").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
+  function doLogin(){
+    var email = document.getElementById("loginEmail").value.trim();
+    var pass = document.getElementById("loginPass").value;
+    var err = document.getElementById("loginErr");
+    err.classList.remove("show");
+    auth.signInWithEmailAndPassword(email, pass).catch(function(e){
+      err.textContent = "Giriş alınmadı: " + (e.code === "auth/invalid-credential" || e.code==="auth/wrong-password" || e.code==="auth/user-not-found" ? "e-poçt və ya parol yanlışdır" : e.code);
+      err.classList.add("show");
+    });
+  }
+  document.getElementById("logoutBtn").addEventListener("click", function(){ auth.signOut(); });
+
+  auth.onAuthStateChanged(function(user){
+    if(user){
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("appRoot").style.display = "block";
+      bootApp();
+    } else {
+      document.getElementById("loginScreen").style.display = "flex";
+      document.getElementById("appRoot").style.display = "none";
+    }
+  });
+})();
+</script>
+</body>
+</html>

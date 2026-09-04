@@ -1,0 +1,21 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // "products" holds ONLY customer-safe + tracker fields (no secrets are
+    // ever stored server-side-only — this is a client-only app). Public
+    // storefront (index.html) needs to READ this collection with no login.
+    // Writes (add/edit/delete a product) require a signed-in admin —
+    // that's the one Firebase Auth user you create for yourself in the
+    // Firebase Console (see README.md, step 3).
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+
+    // Deny everything else by default.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

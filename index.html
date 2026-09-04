@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="az">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Stock USA</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&display=swap">
+<style>
+  :root{
+    --navy:#122446;
+    --navy-2:#1c3660;
+    --navy-soft:#3a4a6a;
+    --white:#ffffff;
+    --grey-bg:#f5f5f5;
+    --grey-line:#e1e4ea;
+    --grey-line-2:#cdd3de;
+    --red:#c6102e;
+    --red-soft:#fbe7ea;
+    --green:#1e7a46;
+    --green-soft:#e5f3ea;
+    --surface:#ffffff;
+    --text:#122446;
+    --text-dim:#54627f;
+    --text-faint:#8791a6;
+    --shadow: 0 1px 2px rgba(18,36,70,.06), 0 4px 14px rgba(18,36,70,.05);
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --navy:#0d1a30; --navy-2:#16274a; --navy-soft:#7c8db3;
+      --white:#0f1930; --grey-bg:#0a1122; --grey-line:#233254; --grey-line-2:#2c3d63;
+      --red:#e8536c; --red-soft:#2c1620; --green:#57c98a; --green-soft:#132a1f;
+      --surface:#101d38; --text:#eaeef7; --text-dim:#a7b2cb; --text-faint:#71799a;
+      --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --navy:#0d1a30; --navy-2:#16274a; --navy-soft:#7c8db3;
+    --white:#0f1930; --grey-bg:#0a1122; --grey-line:#233254; --grey-line-2:#2c3d63;
+    --red:#e8536c; --red-soft:#2c1620; --green:#57c98a; --green-soft:#132a1f;
+    --surface:#101d38; --text:#eaeef7; --text-dim:#a7b2cb; --text-faint:#71799a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.35);
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--grey-bg); color:var(--text);
+    font-family:"IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{ font-family:"IBM Plex Mono", ui-monospace, monospace; font-variant-numeric:tabular-nums; }
+  .display{
+    font-family:"Big Shoulders Display", "Arial Narrow", sans-serif;
+    text-transform:uppercase; letter-spacing:.02em; font-weight:800; text-wrap:balance;
+  }
+  a{ color:inherit; }
+
+  header{ background:var(--navy); color:#fff; padding:26px 20px 30px; text-align:center; }
+  .brand{ font-size:34px; line-height:1; letter-spacing:.03em; }
+  .brand span{ color:var(--red); }
+  .tagline{ font-size:12.5px; color:#c7d0e3; letter-spacing:.07em; text-transform:uppercase; font-weight:500; margin-top:6px; }
+  .ig-link{
+    display:inline-flex; align-items:center; gap:6px; margin-top:14px; font-size:13px; font-weight:600;
+    color:#fff; text-decoration:none; border:1px solid rgba(255,255,255,.3); padding:7px 14px;
+  }
+  .ig-link:hover{ border-color:#fff; }
+
+  main{ max-width:1080px; margin:0 auto; padding:20px 16px 60px; }
+
+  .tabs{ display:flex; gap:8px; justify-content:center; margin-bottom:20px; flex-wrap:wrap; }
+  .tab{
+    border:1px solid var(--grey-line-2); background:var(--surface); color:var(--text-dim);
+    font-size:12.5px; font-weight:600; letter-spacing:.03em; padding:9px 18px; cursor:pointer;
+  }
+  .tab.active{ background:var(--navy); border-color:var(--navy); color:#fff; }
+
+  .grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(230px,1fr)); gap:16px; }
+  .card{
+    background:var(--surface); border:1px solid var(--grey-line); box-shadow:var(--shadow);
+    display:flex; flex-direction:column; overflow:hidden;
+  }
+  .card.sold .card-media img{ filter:grayscale(60%); opacity:.55; }
+  .card-media{
+    aspect-ratio:1/1; background:var(--grey-bg); position:relative; overflow:hidden;
+    display:flex; align-items:center; justify-content:center; border-bottom:1px solid var(--grey-line);
+  }
+  .card-media img{ width:100%; height:100%; object-fit:contain; display:block; }
+  .card-media .ph{
+    font-family:"Big Shoulders Display"; font-weight:800; font-size:16px; color:var(--text-faint);
+    letter-spacing:.06em; text-transform:uppercase; text-align:center; padding:0 14px;
+  }
+  .status-pill{
+    position:absolute; top:9px; right:9px; font-size:10px; font-weight:700; letter-spacing:.05em;
+    text-transform:uppercase; padding:4px 9px; display:flex; align-items:center; gap:4px;
+  }
+  .status-pill.in{ background:var(--green-soft); color:var(--green); }
+  .status-pill.out{ background:rgba(0,0,0,.62); color:#fff; }
+  .status-pill .d{ width:5px; height:5px; border-radius:50%; background:currentColor; }
+
+  .card-body{ padding:14px 14px 16px; display:flex; flex-direction:column; gap:9px; flex:1; }
+  .card-title-row{ display:flex; align-items:baseline; gap:7px; flex-wrap:wrap; }
+  .card-code{
+    font-family:"IBM Plex Mono"; font-size:10px; font-weight:600; letter-spacing:.03em;
+    color:var(--navy-soft); border:1px solid var(--grey-line-2); padding:2px 6px; flex:none;
+  }
+  .card-title{ font-size:14.5px; font-weight:600; line-height:1.3; }
+  .card-brand{ font-size:11px; color:var(--text-dim); text-transform:uppercase; letter-spacing:.06em; }
+  .card-price{ font-family:"IBM Plex Mono"; font-size:19px; font-weight:600; color:var(--text); }
+  .card-price .cur{ font-size:11px; color:var(--text-dim); margin-right:2px; font-weight:500; }
+  .card-price.tbd{ font-size:12.5px; color:var(--text-faint); font-family:"IBM Plex Sans"; font-weight:500; }
+
+  .sizes{ display:flex; flex-wrap:wrap; gap:4px; }
+  .size{
+    font-family:"IBM Plex Mono"; font-size:10px; padding:3px 6px; border:1px solid var(--grey-line-2);
+    color:var(--text-faint); text-decoration:line-through;
+  }
+  .size.avail{ border-color:var(--green); color:var(--green); text-decoration:none; font-weight:500; }
+
+  .cta{
+    margin-top:auto; display:block; text-align:center; text-decoration:none;
+    background:var(--red); color:#fff; font-weight:700; font-size:12.5px; letter-spacing:.03em;
+    padding:10px; border:none; cursor:pointer;
+  }
+  .cta:hover{ background:#a80d26; }
+  .cta.notify{ background:var(--navy); }
+  .cta.notify:hover{ background:var(--navy-2); }
+  .cta-hint{ font-size:10px; color:var(--text-faint); text-align:center; line-height:1.4; margin-top:-2px; }
+
+  .empty{
+    background:var(--surface); border:1px dashed var(--grey-line-2); padding:60px 20px;
+    text-align:center; color:var(--text-dim); font-size:13.5px; grid-column:1/-1;
+  }
+
+  .toast{
+    position:fixed; bottom:18px; left:50%; transform:translateX(-50%); max-width:88vw;
+    background:var(--navy); color:#fff; padding:11px 18px; font-size:12.5px; font-weight:500;
+    box-shadow:var(--shadow); opacity:0; pointer-events:none; transition:opacity .2s, transform .2s; z-index:60;
+    text-align:center; line-height:1.4;
+  }
+  .toast.show{ opacity:1; transform:translateX(-50%) translateY(-4px); }
+
+  .overlay{
+    position:fixed; inset:0; background:rgba(13,20,38,.6); display:none;
+    align-items:center; justify-content:center; padding:20px; z-index:70;
+  }
+  .overlay.open{ display:flex; }
+  .order-modal{
+    background:var(--surface); width:100%; max-width:340px; border:1px solid var(--grey-line);
+    box-shadow:0 20px 60px rgba(0,0,0,.35); padding:22px 20px;
+  }
+  .order-modal h3{ margin:0 0 4px; font-size:16px; font-family:"Big Shoulders Display"; text-transform:uppercase; letter-spacing:.02em; font-weight:800; color:var(--text); }
+  .order-modal .lead{ font-size:12.5px; color:var(--text-dim); margin:0 0 10px; }
+  .order-modal .msg-box{
+    background:var(--grey-bg); border:1px solid var(--grey-line-2); padding:11px 12px;
+    font-size:13px; line-height:1.45; color:var(--text); margin-bottom:14px;
+  }
+  .order-modal ol{ margin:0 0 18px; padding-left:20px; font-size:12.5px; color:var(--text-dim); line-height:1.75; }
+  .order-modal ol b{ color:var(--text); }
+  .order-modal .go-btn{
+    display:block; width:100%; text-align:center; text-decoration:none;
+    background:var(--red); color:#fff; font-weight:700; font-size:13.5px; letter-spacing:.02em;
+    padding:12px; border:none; cursor:pointer;
+  }
+  .order-modal .go-btn:hover{ background:#a80d26; }
+  .order-modal .cancel-btn{
+    display:block; width:100%; text-align:center; background:none; border:none;
+    color:var(--text-faint); padding:10px; cursor:pointer; font-size:12px; margin-top:2px;
+  }
+
+  footer{
+    max-width:1080px; margin:0 auto; padding:10px 16px 40px; color:var(--text-faint);
+    font-size:11px; text-align:center; line-height:1.6;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand display">STOCK<span>USA</span></div>
+  <div class="tagline">Premium outlet tapıntıları · hər gün yenilənir</div>
+  <a class="ig-link" href="https://instagram.com/stockusa.az" target="_blank" rel="noopener">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1"/></svg>
+    @stockusa.az
+  </a>
+</header>
+
+<main>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-f="all">Hamısı</button>
+    <button class="tab" data-f="in">Stokda</button>
+    <button class="tab" data-f="out">Bitib</button>
+  </div>
+  <div class="grid" id="grid"><div class="empty">Yüklənir…</div></div>
+</main>
+
+<footer id="footer">Canlı məlumat — hər dəyişiklik dərhal göstərilir.</footer>
+
+<div class="toast" id="toast"></div>
+
+<div class="overlay" id="orderOverlay">
+  <div class="order-modal">
+    <h3>Sifarişi tamamlayın</h3>
+    <p class="lead">Bu mesajı sizin üçün kopyaladıq:</p>
+    <div class="msg-box" id="orderMsgBox"></div>
+    <ol>
+      <li><b>"Instagram-ı aç"</b> düyməsinə basın</li>
+      <li>Açılan söhbətdə mesaj qutusuna toxunun</li>
+      <li>Çıxan <b>"Paste"</b> (Yapışdır) təklifinə basın və göndərin</li>
+    </ol>
+    <button class="go-btn" id="orderGoBtn">Instagram-ı aç ↗</button>
+    <button class="cancel-btn" id="orderCancelBtn">Ləğv et</button>
+  </div>
+</div>
+
+<!-- Firebase (compat build — same collection().doc().onSnapshot() style API) -->
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+
+<script>
+(function(){
+  "use strict";
+  var IG_USER = "stockusa.az";
+  var PRODUCTS = [];
+  var currentFilter = "all";
+
+  function escapeHtml(s){
+    return String(s==null?"":s).replace(/[&<>"']/g, function(c){
+      return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];
+    });
+  }
+  function orderMessage(p){
+    return "Salam! " + (p.code ? p.code + " — " : "") + p.name + " məhsulu ilə maraqlanıram.";
+  }
+  function dmLink(p){
+    return "https://ig.me/m/" + IG_USER + "?text=" + encodeURIComponent(orderMessage(p));
+  }
+  function toast(msg){
+    var t = document.getElementById("toast");
+    t.textContent = msg; t.classList.add("show");
+    clearTimeout(toast._h);
+    toast._h = setTimeout(function(){ t.classList.remove("show"); }, 4200);
+  }
+
+  function cardHtml(p){
+    var inStock = p.inStock === true;
+    var known = p.inStock === true || p.inStock === false;
+    var noSizes = p.hasSizes === false;
+    var sizesAll = p.sizesAll || [];
+    var sizesInStock = p.sizesInStock || [];
+    var sizesHtml = sizesAll.length ? sizesAll.map(function(sz){
+      var avail = sizesInStock.indexOf(sz) > -1;
+      return '<span class="size'+(avail?' avail':'')+'">'+escapeHtml(sz)+'</span>';
+    }).join("") : "";
+
+    var colorsAll = p.colorsAll || [];
+    var colorsInStock = p.colorsInStock || [];
+    var colorsHtml = colorsAll.length ? colorsAll.map(function(c){
+      var avail = colorsInStock.indexOf(c) > -1;
+      return '<span class="size'+(avail?' avail':'')+'">'+escapeHtml(c)+'</span>';
+    }).join("") : "";
+
+    var displayPrice = p.salePrice != null ? p.salePrice : p.price;
+    var displayCurrency = p.salePrice != null ? (p.saleCurrency||"AZN") : (p.currency||"AZN");
+    var priceHtml = (p.showPrice && displayPrice != null)
+      ? '<div class="card-price mono"><span class="cur">'+escapeHtml(displayCurrency)+'</span>'+Number(displayPrice).toFixed(2)+'</div>'
+      : '<div class="card-price tbd">Qiymət üçün müraciət edin</div>';
+
+    var pillHtml = known
+      ? '<span class="status-pill '+(inStock?"in":"out")+'"><span class="d"></span>'+(inStock?"Stokda":"Bitib")+'</span>'
+      : '';
+
+    var ctaLabel = inStock ? "Sifariş ver" : "Stokda olanda xəbər ver";
+    var ctaClass = inStock ? "cta" : "cta notify";
+
+    var media = p.imageUrl
+      ? '<img src="'+escapeHtml(p.imageUrl)+'" alt="" loading="lazy" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'
+      : '';
+    var placeholder = '<div class="ph" style="'+(p.imageUrl?'display:none':'display:flex')+'">'+escapeHtml(p.name||"?")+'</div>';
+
+    return ''
+    +'<div class="card'+(known && !inStock ? ' sold':'')+'" data-status="'+(known ? (inStock?"in":"out") : "unknown")+'">'
+      +'<div class="card-media">'+media+placeholder+pillHtml+'</div>'
+      +'<div class="card-body">'
+        +'<div>'
+          +'<div class="card-title-row">'
+            +(p.code? '<span class="card-code">'+escapeHtml(p.code)+'</span>':'')
+            +'<span class="card-title">'+escapeHtml(p.name)+'</span>'
+          +'</div>'
+          +(p.brand? '<div class="card-brand">'+escapeHtml(p.brand)+'</div>':'')
+        +'</div>'
+        +priceHtml
+        +(!noSizes && sizesHtml? '<div class="sizes">'+sizesHtml+'</div>':'')
+        +(colorsHtml? '<div class="sizes">'+colorsHtml+'</div>':'')
+        +'<a class="'+ctaClass+'" href="'+dmLink(p)+'" data-id="'+escapeHtml(p.id)+'">'+ctaLabel+'</a>'
+        +'<div class="cta-hint">Instagram açılanda mesaj qutusuna toxunub "Paste" seçin, sonra göndərin</div>'
+      +'</div>'
+    +'</div>';
+  }
+
+  var orderOverlay = document.getElementById("orderOverlay");
+  var pendingLink = null;
+  function openOrderModal(p, href){
+    pendingLink = href;
+    var msg = orderMessage(p);
+    document.getElementById("orderMsgBox").textContent = msg;
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(msg);
+    }catch(err){}
+    orderOverlay.classList.add("open");
+  }
+  function closeOrderModal(){ orderOverlay.classList.remove("open"); pendingLink = null; }
+
+  document.getElementById("grid").addEventListener("click", function(e){
+    var link = e.target.closest("a.cta");
+    if(!link) return;
+    var p = PRODUCTS.find(function(x){ return x.id === link.dataset.id; });
+    if(!p) return;
+    e.preventDefault();
+    openOrderModal(p, link.href);
+  });
+
+  document.getElementById("orderGoBtn").addEventListener("click", function(){
+    if(pendingLink) window.location.href = pendingLink;
+  });
+  document.getElementById("orderCancelBtn").addEventListener("click", closeOrderModal);
+  orderOverlay.addEventListener("click", function(e){ if(e.target === orderOverlay) closeOrderModal(); });
+
+  function render(){
+    var grid = document.getElementById("grid");
+    var list = PRODUCTS.filter(function(p){
+      if(currentFilter === "in") return p.inStock === true;
+      if(currentFilter === "out") return p.inStock === false;
+      return true;
+    });
+    if(!list.length){
+      grid.innerHTML = '<div class="empty">Bu kateqoriyada hazırda məhsul yoxdur.</div>';
+      return;
+    }
+    grid.innerHTML = list.map(cardHtml).join("");
+  }
+
+  document.getElementById("tabs").addEventListener("click", function(e){
+    var btn = e.target.closest(".tab");
+    if(!btn) return;
+    document.querySelectorAll(".tab").forEach(function(t){ t.classList.remove("active"); });
+    btn.classList.add("active");
+    currentFilter = btn.dataset.f;
+    render();
+  });
+
+  // ---------- live Firestore feed — no more "regenerate + republish" step ----------
+  // Only customer-safe fields ever exist in this collection to begin with (the
+  // admin dashboard and the check-stock.js bot never write sourceUrl/site/etc
+  // here — see README.md's data model note), and Firestore rules make this
+  // collection public-READ / auth-only-WRITE, so it's safe to read directly.
+  firebase.initializeApp(FIREBASE_CONFIG);
+  var db = firebase.firestore();
+  db.collection("products").onSnapshot(function(snap){
+    PRODUCTS = snap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    render();
+  }, function(err){
+    document.getElementById("grid").innerHTML = '<div class="empty">Yüklənə bilmədi: '+escapeHtml(err.code||err.message)+'</div>';
+  });
+})();
+</script>
+</body>
+</html>
